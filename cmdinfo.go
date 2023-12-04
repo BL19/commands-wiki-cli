@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/mistakenelf/teacup/markdown"
 )
 
@@ -24,7 +25,9 @@ type cmdInfoModel struct {
 	command              Command
 	variables            map[string]string
 	isReadingVariables   bool
-	variableRegex        *regexp.Regexp
+	validationRegex      *regexp.Regexp
+	validationType       string
+	validationData       string
 	textInput            textinput.Model
 	currentVariableInput string
 }
@@ -168,7 +171,9 @@ func (m cmdInfoModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// Ask for the variables
 				m.isReadingVariables = true
 				m.currentVariableInput = m.command.Variables[0]
-				m.variableRegex = nil
+				m.validationRegex = nil
+				m.validationType = ""
+				m.validationData = ""
 				m = updateVariableMetadata(m)
 			} else {
 				// Run the command
@@ -203,14 +208,16 @@ func updateVariableMetadata(m cmdInfoModel) cmdInfoModel {
 			validationType := matches[1]
 			validationData := matches[2]
 			switch validationType {
-			case "regex":
+			case "file", "regex":
 				// Check if the regex is valid
 				regex, err := regexp.Compile("^" + validationData + "$")
 				if err != nil {
 					fmt.Println("Invalid regex: " + validationData)
 				}
-				m.variableRegex = regex
+				m.validationRegex = regex
 			}
+			m.validationType = validationType
+			m.validationData = validationData
 		}
 	}
 
@@ -221,10 +228,8 @@ func updateVariableMetadata(m cmdInfoModel) cmdInfoModel {
 }
 
 func setVariable(m *cmdInfoModel, cmds *[]tea.Cmd) {
-	if (*m).variableRegex != nil {
-		if !(*m).variableRegex.MatchString((*m).textInput.Value()) {
-			return
-		}
+	if !m.ValidateInput() {
+		return
 	}
 	// Save the variable
 	(*m).variables[m.currentVariableInput] = (*m).textInput.Value()
@@ -236,7 +241,6 @@ func setVariable(m *cmdInfoModel, cmds *[]tea.Cmd) {
 		if _, ok := (*m).variables[variable]; !ok {
 			// Ask for this variable
 			(*m).currentVariableInput = variable
-			(*m).variableRegex = nil
 			hasMissingVar = true
 		}
 	}
@@ -287,6 +291,35 @@ func generateExecCommand(cmd Command, variables map[string]string) {
 	fileToExecuteOnExit = &filePath
 }
 
+var mimetypeCache map[string]string
+
+func (m cmdInfoModel) ValidateInput() bool {
+	input := m.textInput.Value()
+	var toValidate string
+	if m.validationType == "regex" {
+		toValidate = input
+	} else if m.validationType == "file" {
+		// Check if we have the mimetype in the cache
+		if mimetypeCache == nil {
+			mimetypeCache = make(map[string]string)
+		}
+		if mimetypeCache[input] == "" {
+			// Get the mimetype
+			mimetype, err := mimetype.DetectFile(input)
+			if err != nil {
+				return false
+			}
+			mimetypeCache[input] = mimetype.String()
+		}
+		toValidate = mimetypeCache[input]
+	}
+	if m.validationRegex != nil {
+		return m.validationRegex.MatchString(toValidate)
+	}
+
+	return true
+}
+
 // View returns a string representation of the UI.
 func (m cmdInfoModel) View() string {
 	view := m.markdown.View()
@@ -318,12 +351,10 @@ func (m cmdInfoModel) View() string {
 		view += m.textInput.View()
 
 		// If we have a regex, validate it
-		if m.variableRegex != nil {
-			if !m.variableRegex.MatchString(m.textInput.Value()) {
-				view += " ❌"
-			} else {
-				view += " ✔️"
-			}
+		if !m.ValidateInput() {
+			view += " ❌"
+		} else {
+			view += " ✔️"
 		}
 
 		view += "\n\n"
