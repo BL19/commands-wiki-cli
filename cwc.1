@@ -1,0 +1,40 @@
+.TH CWC 1 "Commands.wiki CLI"
+.SH NAME
+cwc \- commandline version for commands.wiki
+.SH SYNOPSIS
+.B cwc
+.RI [ options ]
+.SH DESCRIPTION
+This is a commandline version for commands.wiki. It can be used to run commands without having to access the website.
+.SH OPTIONS
+.TP
+.BR "update [--repo <repository>] [--branch <branch>]"
+Update the command index. This will pull the git repository and index all commands again. The --repo and --branch flags are optional and allow specifying a particular repository and branch to update.
+.TP
+.BR "clean"
+Reset the cli to default settings.
+.TP
+.BR "search"
+Search for a command. Either run `cwc` and search using `/<searchterm>`, or run `cwc <searchterm>`.
+.SH EXAMPLES
+.TP
+.BR "cwc"
+Runs the TUI version of cwc and shows all commands. If the index has not been updated for 24 hours it will be updated when this is executed.
+.TP
+.BR "cwc update"
+Update the command index.
+.TP
+.BR "cwc clean"
+Reset the cli to default settings.
+.TP
+.BR "cwc search"
+Search for a command.
+.SH FILES
+The configuration file is located at ~/.config/commands-wiki/config. This file is used to store the settings for the cwc command-line tool.
+.SH AUTHOR
+Written by BL19.
+.SH REPORTING BUGS
+Report bugs to <https://github.com/BL19/commands-wiki-cli/issues>.
+.SH COPYRIGHT
+Copyright © 2023 BL19.
+This is free software; see the source for copying conditions. There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
