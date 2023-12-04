@@ -16,6 +16,7 @@ import (
 
 type cmdInfoModel struct {
 	keys                 cmdInfoKeymap
+	variableKeys         cmdInfoKeymapVariables
 	help                 help.Model
 	markdown             markdown.Model
 	command              Command
@@ -36,7 +37,7 @@ type cmdInfoKeymap struct {
 // ShortHelp returns keybindings to be shown in the mini help view. It's part
 // of the key.Map interface.
 func (k cmdInfoKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Help, k.Quit}
+	return []key.Binding{k.Execute, k.Help, k.Quit}
 }
 
 // FullHelp returns keybindings for the expanded help view. It's part of the
@@ -50,8 +51,8 @@ func (k cmdInfoKeymap) FullHelp() [][]key.Binding {
 
 var DefaultKeyMap = cmdInfoKeymap{
 	Execute: key.NewBinding(
-		key.WithKeys("enter", "space"),
-		key.WithHelp("enter/space", "run the command"),
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "run the command"),
 	),
 	Quit: key.NewBinding(
 		key.WithKeys("q", "ctrl+c", "esc"),
@@ -71,6 +72,36 @@ var DefaultKeyMap = cmdInfoKeymap{
 	),
 }
 
+type cmdInfoKeymapVariables struct {
+	Execute key.Binding
+	Quit    key.Binding
+}
+
+var VariablesKeymap = cmdInfoKeymapVariables{
+	Execute: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "save the variable/run command"),
+	),
+	Quit: key.NewBinding(
+		key.WithKeys("ctrl+c", "esc"),
+		key.WithHelp("ctrl+c", "quit"),
+	),
+}
+
+// ShortHelp returns keybindings to be shown in the mini help view. It's part
+// of the key.Map interface.
+func (k cmdInfoKeymapVariables) ShortHelp() []key.Binding {
+	return []key.Binding{k.Execute, k.Quit}
+}
+
+// FullHelp returns keybindings for the expanded help view. It's part of the
+// key.Map interface.
+func (k cmdInfoKeymapVariables) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.Execute, k.Quit}, // first column
+	}
+}
+
 func newCmdInfoModel(cmd Command) cmdInfoModel {
 	markdownModel := markdown.New(true, true, lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"})
 	markdownModel.FileName = cmd.MarkdownFile
@@ -84,6 +115,7 @@ func newCmdInfoModel(cmd Command) cmdInfoModel {
 	return cmdInfoModel{
 		markdown:             markdownModel,
 		keys:                 DefaultKeyMap,
+		variableKeys:         VariablesKeymap,
 		help:                 help.New(),
 		command:              cmd,
 		variables:            make(map[string]string),
@@ -209,12 +241,21 @@ func generateExecCommand(cmd Command, variables map[string]string) {
 func (m cmdInfoModel) View() string {
 	view := m.markdown.View()
 	if m.isReadingVariables {
+		// Remove 4 lines from the from the bottom
+		lines := strings.Split(view, "\n")
+		lines = lines[:len(lines)-4]
+		view = strings.Join(lines, "\n")
+
 		view += "\n\n"
-		view += "Enter the value for " + m.currentVariableInput + ": "
+		view += "Enter the value for " + m.currentVariableInput + ""
 		view += m.textInput.View()
+		view += "\n\n"
+		view += m.help.View(m.variableKeys)
+	} else {
+		view += "\n\n"
+		view += m.help.View(m.keys)
 	}
-	view += "\n\n"
-	view += m.help.View(m.keys)
+
 	return view
 }
 
