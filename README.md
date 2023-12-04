@@ -8,6 +8,9 @@ curl https://raw.githubusercontent.com/BL19/commands-wiki-cli/main/clone_and_ins
 cwc
 ```
 
+## Demo
+![Showcase](https://cdn.bl19.dev/random-stuff/render1701722402957.gif)
+
 ## Features
 - [x] List all commands in the wiki (list)
 - [x] Display the markdown for commands
