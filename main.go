@@ -16,6 +16,7 @@ func main() {
 	// updateIndex [--repo <repo>]
 	updateIndexCmd := flag.NewFlagSet("updateIndex", flag.ExitOnError)
 	updateIndexRepo := updateIndexCmd.String("repo", default_repo, "repo <repo>")
+	updateIndexBranch := updateIndexCmd.String("branch", GetValueNoError("branch", "master"), "branch <branch>")
 
 	// search <term>
 	searchCmd := flag.NewFlagSet("search", flag.ExitOnError)
@@ -28,7 +29,7 @@ func main() {
 	switch os.Args[1] {
 	case "update", "updateIndex":
 		updateIndexCmd.Parse(os.Args[2:])
-		err := updateIndex(*updateIndexRepo)
+		err := updateIndex(*updateIndexRepo, *updateIndexBranch)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

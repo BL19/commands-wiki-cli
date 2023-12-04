@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func updateIndex(repo string) error {
+func updateIndex(repo string, branch string) error {
 	// Define where to put the cloned repo, it should be in the config directory with the "repos/<reponame>" directory
 	// If the directory does not exist, create it
 	configPath, err := os.UserConfigDir()
@@ -38,10 +38,16 @@ func updateIndex(repo string) error {
 			return fmt.Errorf("git pull failed")
 		}
 	} else {
-		cmd := execCommand("git", []string{"clone", "-b", GetValueNoError("branch", "master"), repo, repo_path})
+		cmd := execCommand("git", []string{"clone", "-b", branch, repo, repo_path})
 		if cmd.ProcessState.ExitCode() != 0 {
 			return fmt.Errorf("git clone failed")
 		}
+	}
+
+	// Checkout the branch we have selected
+	cmd := execCommand("git", []string{"-C", repo_path, "checkout", branch})
+	if cmd.ProcessState.ExitCode() != 0 {
+		return fmt.Errorf("git checkout failed")
 	}
 
 	// Find all .md files recursively in the "src/content/docs/commands/" of the repo
