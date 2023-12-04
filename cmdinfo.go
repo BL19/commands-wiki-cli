@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -22,6 +23,7 @@ type cmdInfoModel struct {
 	command              Command
 	variables            map[string]string
 	isReadingVariables   bool
+	variableRegex        *regexp.Regexp
 	textInput            textinput.Model
 	currentVariableInput string
 }
@@ -159,27 +161,14 @@ func (m cmdInfoModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Execute):
 			if m.isReadingVariables {
-				// Save the variable
-				m.variables[m.currentVariableInput] = m.textInput.Value()
-				m.textInput.SetValue("")
-				// Check if all variables have been read
-				var hasMissingVar bool
-				for _, variable := range m.command.Variables {
-					if _, ok := m.variables[variable]; !ok {
-						// Ask for this variable
-						m.currentVariableInput = variable
-						hasMissingVar = true
-					}
-				}
-				if !hasMissingVar {
-					// Run the command
-					generateExecCommand(m.command, m.variables)
-					cmds = append(cmds, tea.Quit)
-				}
+				setVariable(&m, &cmds)
+				m = updateVariableMetadata(m)
 			} else if len(m.command.Variables) > 0 {
 				// Ask for the variables
 				m.isReadingVariables = true
 				m.currentVariableInput = m.command.Variables[0]
+				m.variableRegex = nil
+				m = updateVariableMetadata(m)
 			} else {
 				// Run the command
 				generateExecCommand(m.command, m.variables)
@@ -196,6 +185,65 @@ func (m cmdInfoModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
+}
+
+func updateVariableMetadata(m cmdInfoModel) cmdInfoModel {
+	commandMetadata := m.command.Metadata
+	// Get the variable metadata
+	variableMetadata := commandMetadata[m.currentVariableInput]
+	// Get the validation
+	variableValidation := variableMetadata["validation"]
+	if variableValidation != "" {
+		// type <data>
+		// Extract the validation type
+		reValidationType := regexp.MustCompile("([A-Za-z]+) (.+)")
+		matches := reValidationType.FindStringSubmatch(variableValidation)
+		if len(matches) == 3 {
+			validationType := matches[1]
+			validationData := matches[2]
+			switch validationType {
+			case "regex":
+				// Check if the regex is valid
+				regex, err := regexp.Compile("^" + validationData + "$")
+				if err != nil {
+					fmt.Println("Invalid regex: " + validationData)
+				}
+				m.variableRegex = regex
+			}
+		}
+	}
+
+	// Set the placeholder for the textinput if a placeholder exists
+	variablePlaceholder := variableMetadata["placeholder"]
+	m.textInput.Placeholder = variablePlaceholder
+	return m
+}
+
+func setVariable(m *cmdInfoModel, cmds *[]tea.Cmd) {
+	if (*m).variableRegex != nil {
+		if !(*m).variableRegex.MatchString((*m).textInput.Value()) {
+			return
+		}
+	}
+	// Save the variable
+	(*m).variables[m.currentVariableInput] = (*m).textInput.Value()
+	(*m).textInput.SetValue("")
+
+	// Check if all variables have been read
+	var hasMissingVar bool
+	for _, variable := range (*m).command.Variables {
+		if _, ok := (*m).variables[variable]; !ok {
+			// Ask for this variable
+			(*m).currentVariableInput = variable
+			(*m).variableRegex = nil
+			hasMissingVar = true
+		}
+	}
+	if !hasMissingVar {
+		// Run the command
+		generateExecCommand((*m).command, (*m).variables)
+		*cmds = append(*cmds, tea.Quit)
+	}
 }
 
 var fileToExecuteOnExit *string
@@ -241,14 +289,41 @@ func generateExecCommand(cmd Command, variables map[string]string) {
 func (m cmdInfoModel) View() string {
 	view := m.markdown.View()
 	if m.isReadingVariables {
+		var variableLines string
+		variableLines += "\n\n"
+
+		commandMetadata := m.command.Metadata
+		// Get the variable metadata
+		variableMetadata := commandMetadata[m.currentVariableInput]
+		if variableMetadata == nil {
+			variableMetadata = make(map[string]string)
+		}
+
+		// Get the description for the variable
+		variableDescription := variableMetadata["desc"]
+		if variableDescription != "" {
+			variableLines += "Description: " + variableDescription + "\n"
+		}
+
 		// Remove 4 lines from the from the bottom
 		lines := strings.Split(view, "\n")
-		lines = lines[:len(lines)-4]
+		variableLinesCount := len(strings.Split(variableLines, "\n"))
+		lines = lines[:len(lines)-4-variableLinesCount]
 		view = strings.Join(lines, "\n")
+		view += variableLines
 
-		view += "\n\n"
 		view += "Enter the value for " + m.currentVariableInput + ""
 		view += m.textInput.View()
+
+		// If we have a regex, validate it
+		if m.variableRegex != nil {
+			if !m.variableRegex.MatchString(m.textInput.Value()) {
+				view += " ❌"
+			} else {
+				view += " ✔️"
+			}
+		}
+
 		view += "\n\n"
 		view += m.help.View(m.variableKeys)
 	} else {
