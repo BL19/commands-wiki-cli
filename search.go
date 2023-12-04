@@ -83,18 +83,27 @@ func search(searchterm string) {
 		contentWords := strings.Split(cmd.Content, " ")
 		for _, searchtermWord := range searchtermWords {
 			for _, titleWord := range titleWords {
-				if strings.Contains(strings.ToLower(titleWord), strings.ToLower(searchtermWord)) {
+				if strings.HasPrefix(strings.ToLower(titleWord), strings.ToLower(searchtermWord)) {
 					score += 1
+				}
+				if strings.Contains(strings.ToLower(titleWord), strings.ToLower(searchtermWord)) {
+					score += 0.125
 				}
 			}
 			for _, descriptionWord := range descriptionWords {
-				if strings.Contains(strings.ToLower(descriptionWord), strings.ToLower(searchtermWord)) {
+				if strings.HasPrefix(strings.ToLower(descriptionWord), strings.ToLower(searchtermWord)) {
 					score += 0.5
+				}
+				if strings.Contains(strings.ToLower(descriptionWord), strings.ToLower(searchtermWord)) {
+					score += 0.125 / 2
 				}
 			}
 			for _, contentWord := range contentWords {
+				if strings.HasPrefix(strings.ToLower(contentWord), strings.ToLower(searchtermWord)) {
+					score += 0.5
+				}
 				if strings.Contains(strings.ToLower(contentWord), strings.ToLower(searchtermWord)) {
-					score += 0.25
+					score += 0.125 / 4
 				}
 			}
 		}
@@ -127,6 +136,16 @@ func search(searchterm string) {
 				}
 			}
 		}
+	}
+
+	if len(filteredCommands) == 0 {
+		fmt.Println("No matching commands found")
+		return
+	}
+
+	if len(filteredCommands) == 1 {
+		showCommmand(filteredCommands[0])
+		return
 	}
 
 	if _, err := tea.NewProgram(newSearchModel(filteredCommands)).Run(); err != nil {
