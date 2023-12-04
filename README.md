@@ -17,6 +17,7 @@ cwc
 - [x] Run commands with placeholders (<>,{})
 - [x] Search for commands
 - [x] Update from the git repository for commands.wiki
+- [x] Validation of variables from markdown commands using a custom syntax in the markdown
 
 ## Usage
 To begin, install `cwc`, then run `cwc`.
@@ -30,8 +31,7 @@ To reset the cli to default settings run `cwc clean`.
 ### Search for a command
 Either run `cwc` and search using `/<searchterm>`, or run `cwc <searchterm>`.
 
-## Installation
-### From source
+## Installation From source
 Run the `install.sh` script as root, this will build and install `cwc` in `/usr/local/bin`.
 ```bash
 git clone https://github.com/BL19/commands-wiki-cli
@@ -39,7 +39,7 @@ cd commands-wiki-cli
 sudo bash build_and_install.sh
 ```
 
-#### Updating
+### Updating
 ```
 cd commands-wiki-cli
 git pull
