@@ -26,16 +26,14 @@ func main() {
 	}
 
 	switch os.Args[1] {
-	case "update":
-	case "updateIndex":
+	case "update", "updateIndex":
 		updateIndexCmd.Parse(os.Args[2:])
 		err := updateIndex(*updateIndexRepo)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-	case "s":
-	case "search":
+	case "s", "search":
 		searchCmd.Parse(os.Args[2:])
 		// Join all remaining arguments
 		query := ""
