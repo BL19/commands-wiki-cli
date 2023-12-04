@@ -9,3 +9,4 @@ sudo cp build/cwc /usr/local/bin/cwc
 cd ..
 rm -rf commands-wiki-cli
 echo -e "\033[1;32mInstallation successful!"
+echo -e "\033[0m"
