@@ -12,6 +12,7 @@ type Command struct {
 	Content        string
 	Variables      []string
 	MarkdownFile   string
+	Metadata       map[string]map[string]string
 }
 
 func (i Command) Title() string       { return i.CmdTitle }

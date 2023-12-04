@@ -117,16 +117,18 @@ func updateIndex(repo string, branch string) error {
 		var codeBlockContent string
 		var description string
 		var isLookingForCodeblockEnd bool
+		var metadata map[string]map[string]string = make(map[string]map[string]string)
 		var markdown string
 		for _, line := range lines {
 			if strings.HasPrefix(line, "### ") {
 				if title != "" {
-					addCmd(title, codeBlockContent, &commands, description, markdown, markdownRoot)
+					addCmd(title, codeBlockContent, &commands, description, markdown, markdownRoot, metadata)
 				}
 				title = strings.TrimPrefix(line, "### ")
 				description = ""
 				isLookingForCodeblock = true
 				markdown = ""
+				metadata = make(map[string]map[string]string)
 			} else if isLookingForCodeblock && !strings.HasPrefix(line, "```") {
 				description += line + "\n"
 			} else if isLookingForCodeblock && strings.HasPrefix(line, "```") {
@@ -137,13 +139,32 @@ func updateIndex(repo string, branch string) error {
 				isLookingForCodeblockEnd = false
 			} else if isLookingForCodeblockEnd {
 				codeBlockContent += line + "\n"
+			} else if strings.HasPrefix(line, "[") && strings.Contains(line, "]: <> (") {
+				// [key]: <> (value)
+				// The line looks like above, extract the key and the value
+				re := regexp.MustCompile(`^\[(.*)\]: <> \((.*)\)$`)
+				matches := re.FindStringSubmatch(line)
+				if len(matches) == 3 {
+					// Parse the value
+					var value string = matches[2]
+					// The value looks like: key1=value1 key2="value2"
+					// Extract all keys and values
+					value_re := regexp.MustCompile(`([A-Za-z0-9_]+)=(([^\s"]+)|("[^"]+"))`)
+					value_matches := value_re.FindAllStringSubmatch(value, -1)
+					if len(value_matches) > 0 {
+						metadata[matches[1]] = make(map[string]string)
+						for _, match := range value_matches {
+							metadata[matches[1]][match[1]] = strings.Trim(match[2], "\"")
+						}
+					}
+				}
 			}
 
 			markdown += line + "\n"
 
 		}
 		if title != "" {
-			addCmd(title, codeBlockContent, &commands, description, markdown, markdownRoot)
+			addCmd(title, codeBlockContent, &commands, description, markdown, markdownRoot, metadata)
 		}
 	}
 	// Write the commands array to the json file
@@ -164,7 +185,7 @@ func updateIndex(repo string, branch string) error {
 	return nil
 }
 
-func addCmd(title string, codeBlockContent string, commands *[]Command, description string, markdown string, markdownRoot string) {
+func addCmd(title string, codeBlockContent string, commands *[]Command, description string, markdown string, markdownRoot string, metadata map[string]map[string]string) {
 	// Extract the names of the variables inside of {}, <>
 	codeBlockLines := strings.Split(codeBlockContent, "\n")
 	var variables []string
@@ -211,6 +232,7 @@ func addCmd(title string, codeBlockContent string, commands *[]Command, descript
 		Variables:      variables,
 		CmdDescription: description,
 		MarkdownFile:   markdownFilePath,
+		Metadata:       metadata,
 	}
 	*commands = append(*commands, cmd)
 }
