@@ -191,7 +191,7 @@ func addCmd(title string, codeBlockContent string, commands *[]Command, descript
 	var variables []string
 	for _, codeBlockLine := range codeBlockLines {
 		// Find all regex matches
-		reVariableNameRegex := regexp.MustCompile("[{<]([A-Za-z_\\/]+)[>}]")
+		reVariableNameRegex := regexp.MustCompile("[{<]([A-Za-z\\-_\\/]+)[>}]")
 		matches := reVariableNameRegex.FindAllStringSubmatch(codeBlockLine, -1)
 		for _, match := range matches {
 			variables = append(variables, match[1])
