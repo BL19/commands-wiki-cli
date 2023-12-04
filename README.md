@@ -2,6 +2,12 @@
 
 This is a commandline version for [commands.wiki](https://commands.wiki). It can be used to run commands without having to access the website.
 
+## Install
+```sh
+curl https://raw.githubusercontent.com/BL19/commands-wiki-cli/main/clone_and_install.sh -sSf | sh
+cwc
+```
+
 ## Features
 - [x] List all commands in the wiki (list)
 - [x] Display the markdown for commands
@@ -27,12 +33,12 @@ Run the `install.sh` script as root, this will build and install `cwc` in `/usr/
 ```bash
 git clone https://github.com/BL19/commands-wiki-cli
 cd commands-wiki-cli
-sudo bash install.sh
+sudo bash build_and_install.sh
 ```
 
 #### Updating
 ```
 cd commands-wiki-cli
 git pull
-sudo bash install.sh
+sudo bash build_and_install.sh
 ```
