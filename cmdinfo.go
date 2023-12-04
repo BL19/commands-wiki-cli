@@ -116,7 +116,7 @@ func newCmdInfoModel(cmd Command) cmdInfoModel {
 	ti.Placeholder = ""
 	ti.Focus()
 	ti.CharLimit = 150
-	ti.Width = 30
+	ti.Width = 60
 
 	return cmdInfoModel{
 		markdown:             markdownModel,
