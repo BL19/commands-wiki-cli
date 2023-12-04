@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -264,7 +265,8 @@ func generateExecCommand(cmd Command, variables map[string]string) {
 	bashFileContent = &newContent
 
 	// Write the content to a bash file and run that files
-	filePath := "/tmp/cmdwiki-exec-" + cmd.CmdTitle + ".sh"
+	tempDir := os.TempDir()
+	filePath := filepath.Join(tempDir, "cmdwiki-exec-"+cmd.CmdTitle+".sh")
 	file, err := os.Create(filePath)
 	if err != nil {
 		return
