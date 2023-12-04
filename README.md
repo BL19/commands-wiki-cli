@@ -24,3 +24,15 @@ Either run `cwc` and search using `/<searchterm>`, or run `cwc <searchterm>`.
 ## Installation
 ### From source
 Run the `install.sh` script as root, this will build and install `cwc` in `/usr/local/bin`.
+```bash
+git clone https://github.com/BL19/commands-wiki-cli
+cd commands-wiki-cli
+sudo bash install.sh
+```
+
+#### Updating
+```
+cd commands-wiki-cli
+git pull
+sudo bash install.sh
+```
