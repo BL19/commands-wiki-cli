@@ -36,6 +36,7 @@ type listKeyMap struct {
 }
 
 func search(searchterm string) {
+	checkIfUpdateNeeded()
 	commands, err := readIndex()
 	if err != nil {
 		if os.IsNotExist(err) {
