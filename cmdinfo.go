@@ -224,6 +224,15 @@ func updateVariableMetadata(m cmdInfoModel) cmdInfoModel {
 	// Set the placeholder for the textinput if a placeholder exists
 	variablePlaceholder := variableMetadata["placeholder"]
 	m.textInput.Placeholder = variablePlaceholder
+
+	variableType := variableMetadata["type"]
+	if variableType == "" {
+		m.textInput.EchoMode = textinput.EchoNormal
+		m.textInput.EchoCharacter = ' '
+	} else if variableType == "password" {
+		m.textInput.EchoMode = textinput.EchoPassword
+		m.textInput.EchoCharacter = '•'
+	}
 	return m
 }
 
