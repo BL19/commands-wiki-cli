@@ -139,7 +139,9 @@ func updateIndex(repo string, branch string) error {
 				isLookingForCodeblockEnd = false
 			} else if isLookingForCodeblockEnd {
 				codeBlockContent += line + "\n"
-			} else if strings.HasPrefix(line, "[") && strings.Contains(line, "]: <> (") {
+			}
+
+			if strings.HasPrefix(line, "[") && strings.Contains(line, "]: <> (") {
 				// [key]: <> (value)
 				// The line looks like above, extract the key and the value
 				re := regexp.MustCompile(`^\[(.*)\]: <> \((.*)\)$`)
@@ -158,9 +160,9 @@ func updateIndex(repo string, branch string) error {
 						}
 					}
 				}
+			} else {
+				markdown += line + "\n"
 			}
-
-			markdown += line + "\n"
 
 		}
 		if title != "" {
