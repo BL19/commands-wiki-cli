@@ -184,6 +184,9 @@ func updateIndex(repo string, branch string) error {
 		return err
 	}
 
+	setIndexUpdateTimeToNow()
+	setIndexBranch(branch)
+
 	return nil
 }
 

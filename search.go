@@ -45,7 +45,7 @@ func search(searchterm string) {
 				fmt.Println(err)
 				return
 			}
-			err = updateIndex(default_repo, GetValueNoError("branch", "master"))
+			err = updateIndex(default_repo, getDefaultBranch())
 			if err != nil {
 				fmt.Println(err)
 				return

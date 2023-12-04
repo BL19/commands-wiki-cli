@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strconv"
+	"time"
 )
 
 type Command struct {
@@ -41,4 +43,140 @@ func readIndex() ([]Command, error) {
 		return nil, err
 	}
 	return commands, nil
+}
+
+func getLastIndexUpdate() (uint64, error) {
+	configPath, err := os.UserConfigDir()
+	if err != nil {
+		return 0, err
+	}
+
+	repo_name, err := GetRepoName()
+	if err != nil {
+		return 0, err
+	}
+	lastUpdatePath := filepath.Join(configPath, "commands-wiki", "index", repo_name, "lastUpdate")
+	file, err := os.Open(lastUpdatePath)
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close()
+	var lastUpdate uint64
+	err = json.NewDecoder(file).Decode(&lastUpdate)
+	if err != nil {
+		return 0, err
+	}
+	return lastUpdate, nil
+}
+
+func setIndexUpdateTimeToNow() {
+	configPath, err := os.UserConfigDir()
+	if err != nil {
+		return
+	}
+
+	repo_name, err := GetRepoName()
+	if err != nil {
+		return
+	}
+	lastUpdatePath := filepath.Join(configPath, "commands-wiki", "index", repo_name, "lastUpdate")
+	file, err := os.Create(lastUpdatePath)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	json.NewEncoder(file).Encode(uint64(time.Now().UnixMilli()))
+}
+
+func checkIfUpdateNeeded() {
+	lastUpdate, err := getLastIndexUpdate()
+	if err != nil {
+		return
+	}
+
+	// Get the update interval from the config
+	timeout, err := strconv.ParseUint(GetValueNoError("git-update-interval", "86400000"), 10, 64)
+	if err != nil {
+		timeout = 86400000
+	}
+	if uint64(time.Now().UnixMilli())-lastUpdate > timeout {
+		// Update the index
+		default_repo, err := GetRepo()
+		if err != nil {
+			return
+		}
+		err = updateIndex(default_repo, getDefaultBranch())
+		if err != nil {
+			return
+		}
+	}
+}
+
+func getDefaultBranch() string {
+	defaultBranch := GetValueNoError("branch", "master")
+	configPath, err := os.UserConfigDir()
+	if err != nil {
+		return defaultBranch
+	}
+
+	repo_name, err := GetRepoName()
+	if err != nil {
+		return defaultBranch
+	}
+	branchPath := filepath.Join(configPath, "commands-wiki", "index", repo_name, "branch")
+	file, err := os.Open(branchPath)
+	if err != nil {
+		return defaultBranch
+	}
+	defer file.Close()
+	var branch string
+	err = json.NewDecoder(file).Decode(&branch)
+	if err != nil {
+		return defaultBranch
+	}
+	return branch
+
+}
+
+func setIndexBranch(branch string) {
+	configPath, err := os.UserConfigDir()
+	if err != nil {
+		return
+	}
+
+	repo_name, err := GetRepoName()
+	if err != nil {
+		return
+	}
+	branchPath := filepath.Join(configPath, "commands-wiki", "index", repo_name, "branch")
+	file, err := os.Create(branchPath)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	json.NewEncoder(file).Encode(branch)
+}
+
+func getIndexBranch() (string, error) {
+	configPath, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+
+	repo_name, err := GetRepoName()
+	if err != nil {
+		return "", err
+	}
+	branchPath := filepath.Join(configPath, "commands-wiki", "index", repo_name, "branch")
+	file, err := os.Open(branchPath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	var branch string
+	err = json.NewDecoder(file).Decode(&branch)
+	if err != nil {
+		return "", err
+	}
+	return branch, nil
 }
