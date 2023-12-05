@@ -18,6 +18,7 @@ cwc
 - [x] Search for commands
 - [x] Update from the git repository for commands.wiki
 - [x] Validation of variables from markdown commands using a custom syntax in the markdown
+- [x] Update index automatically every 24 hours
 
 ## Usage
 To begin, install `cwc`, then run `cwc`.
