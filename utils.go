@@ -11,6 +11,7 @@ import (
 // It returns the command object
 func execCommand(command string, args []string) *exec.Cmd {
 	cmd := exec.Command(command, args...)
+	cmd.Dir = os.TempDir()
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin

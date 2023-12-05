@@ -9,6 +9,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/google/go-github/v57 v57.0.0
 	github.com/mistakenelf/teacup v0.4.1
+	github.com/satori/go.uuid v1.2.0
 )
 
 require (

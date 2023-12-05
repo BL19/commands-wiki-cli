@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/google/go-github/v57/github"
+	uuid "github.com/satori/go.uuid"
 )
 
 var sha = "local"
@@ -110,7 +111,22 @@ func checkIfUpdate() {
 		fmt.Scanln(&input)
 		if input == "Y" || input == "y" || input == "" {
 			fmt.Println("Updating...")
-			execCommand("sh", []string{"-c", "\"curl https://raw.githubusercontent.com/BL19/commands-wiki-cli/main/clone_and_install.sh -sSf | sh\""})
+			// Write a temp update script
+			updateScriptPath := "/tmp/" + uuid.NewV4().String() + ".sh"
+			file, err := os.Create(updateScriptPath)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			file.WriteString("#!/bin/bash\n")
+			file.WriteString("\necho \"Starting update\"\n")
+			// Move the cwc to temp
+			file.WriteString("sudo mv /usr/local/bin/cwc /tmp/cwc-" + uuid.NewV4().String() + "\n")
+			file.WriteString("curl https://raw.githubusercontent.com/BL19/commands-wiki-cli/main/clone_and_install.sh | bash\n")
+			file.WriteString("rm " + updateScriptPath + "\n")
+			file.Close()
+			// Execute the script
+			execCommand("bash", []string{updateScriptPath})
 			fmt.Println("Update successful")
 			os.Exit(0)
 		}
