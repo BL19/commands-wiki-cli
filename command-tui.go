@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -13,6 +12,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/mistakenelf/teacup/markdown"
 )
@@ -212,7 +212,7 @@ func updateVariableMetadata(m cmdInfoModel) cmdInfoModel {
 				// Check if the regex is valid
 				regex, err := regexp.Compile("^" + validationData + "$")
 				if err != nil {
-					fmt.Println("Invalid regex: " + validationData)
+					log.Warnf("Invalid regex: %s", validationData)
 				}
 				m.validationRegex = regex
 			}
