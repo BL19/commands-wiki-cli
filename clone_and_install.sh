@@ -3,7 +3,9 @@ echo -e "\033[1;34mInstalling cwc..."
 echo -e "\033[0;90m"
 git clone https://github.com/BL19/commands-wiki-cli
 cd commands-wiki-cli
-go build -o build/cwc
+GIT_SHA=$(git rev-parse HEAD)
+GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+go build -ldflags="-X main.sha=${GIT_SHA} -X main.branch=${GIT_BRANCH}" -o build/cwc
 echo -e "\033[1;33m"
 sudo cp build/cwc /usr/local/bin/cwc
 sudo mkdir -p /usr/local/share/man/man1/
