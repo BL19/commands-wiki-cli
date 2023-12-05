@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/charmbracelet/log"
 
 	"os"
 
@@ -40,24 +41,24 @@ func search(searchterm string) {
 	commands, err := readIndex()
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Println("Index not found, creating index using default settings")
+			log.Infof("Index not found, creating index using default settings")
 			default_repo, err := GetRepo()
 			if err != nil {
-				fmt.Println(err)
+				log.Fatal("some error occured whilst getting the repo", "error", err)
 				return
 			}
 			err = updateIndex(default_repo, getDefaultBranch())
 			if err != nil {
-				fmt.Println(err)
+				log.Fatal("some error occured whilst updating the index", "error", err)
 				return
 			}
 			commands, err = readIndex()
 			if err != nil {
-				fmt.Println(err)
+				log.Fatal("some error occured whilst reading the index", "error", err)
 				return
 			}
 		} else {
-			fmt.Println(err)
+			log.Fatal("some error occured whilst reading the index", "error", err)
 			return
 		}
 	}
@@ -139,7 +140,7 @@ func search(searchterm string) {
 	}
 
 	if len(filteredCommands) == 0 {
-		fmt.Println("No matching commands found")
+		log.Info("No commands found", "searchterm", searchterm)
 		return
 	}
 
@@ -149,8 +150,7 @@ func search(searchterm string) {
 	}
 
 	if _, err := tea.NewProgram(newSearchModel(filteredCommands)).Run(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
+		log.Fatal("error during program execution", "error", err)
 	}
 
 	if selectedCommand != nil {

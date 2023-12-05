@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/charmbracelet/log"
 )
 
 func updateIndex(repo string, branch string) error {
@@ -22,7 +24,7 @@ func updateIndex(repo string, branch string) error {
 		return err
 	}
 	repo_path := filepath.Join(configPath, "commands-wiki", "repos", repo_name)
-	fmt.Printf("cloning repo %s into %s\n", repo, repo_path)
+	log.Infof("cloning repo %s into %s\n", repo, repo_path)
 	config, err := os.UserConfigDir()
 	if err != nil {
 		return err
@@ -32,7 +34,7 @@ func updateIndex(repo string, branch string) error {
 	}
 	// If the directory exists, update the repo
 	if _, err := os.Stat(repo_path); err == nil {
-		fmt.Println("updating repo")
+		log.Info("updating repo")
 		cmd := execCommand("git", []string{"-C", repo_path, "pull"})
 		if cmd.ProcessState.ExitCode() != 0 {
 			return fmt.Errorf("git pull failed")
@@ -81,7 +83,7 @@ func updateIndex(repo string, branch string) error {
 
 	// If the index file does not exist, create it
 	if _, err := os.Stat(indexFilePath); os.IsNotExist(err) {
-		fmt.Println("creating index")
+		log.Infof("creating index")
 		// Create all folders up to that point
 		err := os.MkdirAll(filepath.Dir(indexFilePath), 0744)
 		if err != nil {
@@ -91,7 +93,7 @@ func updateIndex(repo string, branch string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("created index at", indexFilePath)
+		log.Info("created index", "indexPath", indexFilePath)
 	}
 
 	// Open the index file
@@ -211,23 +213,19 @@ func addCmd(title string, codeBlockContent string, commands *[]Command, descript
 	markdownFilePath := filepath.Join(markdownRoot, title+".md")
 	err := os.MkdirAll(filepath.Dir(markdownFilePath), 0744)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatal("Failed to create markdown file parent directories", "error", err)
 	}
 	markdownFile, err := os.Create(markdownFilePath)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatal("Failed to create markdown file", "error", err)
 	}
 	_, err = markdownFile.WriteString(markdown)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatal("Failed to write markdown content", "error", err)
 	}
 	err = markdownFile.Close()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatal("Failed to close markdown file", "error", err)
 	}
 
 	// Write the command to the index serialized as json

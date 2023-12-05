@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/charmbracelet/log"
 	"github.com/google/go-github/v57/github"
 	uuid "github.com/satori/go.uuid"
 )
@@ -18,8 +19,7 @@ func main() {
 
 	default_repo, err := GetRepo()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatal("an error occurred whilst trying to get the default repo to use", "error", err)
 	}
 
 	// updateIndex [--repo <repo>]
@@ -40,8 +40,7 @@ func main() {
 		updateIndexCmd.Parse(os.Args[2:])
 		err := updateIndex(*updateIndexRepo, *updateIndexBranch)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			log.Fatal("an error ocurred whilst updating the index", "error", err)
 		}
 	case "s", "search":
 		searchCmd.Parse(os.Args[2:])
@@ -54,8 +53,7 @@ func main() {
 	case "clean":
 		err := CleanConfig()
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			log.Fatal("an error occurred whilst cleaning the config", "error", err)
 		}
 	case "version":
 		fmt.Println("cwc - commands.wiki in your terminal")
@@ -84,8 +82,8 @@ func checkIfUpdate() {
 		SHA: branch,
 	})
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Warn("an error occurred whilst trying to check for updates", "error", err)
+		return // Ignore for now and try to update next time instead
 	}
 
 	var newCommits []*github.RepositoryCommit
@@ -97,7 +95,7 @@ func checkIfUpdate() {
 	}
 
 	if len(newCommits) > 0 {
-		fmt.Println("Update available: " + newCommits[0].GetHTMLURL())
+		fmt.Println("Update available: ")
 
 		var changelog string
 		for _, commit := range newCommits {
@@ -105,18 +103,18 @@ func checkIfUpdate() {
 		}
 		fmt.Println(changelog)
 		fmt.Println()
+		fmt.Println("Compare changes: https://github.com/BL19/commands-wiki-cli/compare/" + sha + "..." + *newCommits[0].SHA)
 		fmt.Println()
 		fmt.Print("Do you want to update (Y/n)? ")
 		var input string
 		fmt.Scanln(&input)
 		if input == "Y" || input == "y" || input == "" {
-			fmt.Println("Updating...")
+			log.Info("Updating...")
 			// Write a temp update script
 			updateScriptPath := "/tmp/" + uuid.NewV4().String() + ".sh"
 			file, err := os.Create(updateScriptPath)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				log.Fatal("failed to create update script file, try running as sudo", "error", err)
 			}
 			file.WriteString("#!/bin/bash\n")
 			file.WriteString("\necho \"Starting update\"\n")
@@ -127,7 +125,7 @@ func checkIfUpdate() {
 			file.Close()
 			// Execute the script
 			execCommand("bash", []string{updateScriptPath})
-			fmt.Println("Update successful")
+			log.Infof("Update successful")
 			os.Exit(0)
 		}
 	}
