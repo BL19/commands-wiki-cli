@@ -30,6 +30,9 @@ func main() {
 	// search <term>
 	searchCmd := flag.NewFlagSet("search", flag.ExitOnError)
 
+	// ai <prompt>
+	aiCmd := flag.NewFlagSet("ai", flag.ExitOnError)
+
 	if len(os.Args) < 2 {
 		search("")
 		os.Exit(0)
@@ -61,6 +64,17 @@ func main() {
 		fmt.Println("Branch: " + branch)
 		fmt.Println("Github: https://github.com/BL19/commands-wiki-cli")
 		os.Exit(0)
+	case "ai":
+		aiCmd.Parse(os.Args[2:])
+		// ai <prompt>
+		if len(os.Args) < 3 {
+			log.Fatal("ai command requires a prompt")
+		}
+		query := ""
+		for _, arg := range aiCmd.Args() {
+			query += arg + " "
+		}
+		runCommandAiCommandGeneration(query)
 	default:
 		// Assume we are searching and try to search
 		// Join all remaining arguments

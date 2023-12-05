@@ -15,6 +15,7 @@ type Command struct {
 	Variables      []string
 	MarkdownFile   string
 	Metadata       map[string]map[string]string
+	AiGenerated    bool
 }
 
 func (i Command) Title() string       { return i.CmdTitle }
@@ -179,4 +180,47 @@ func getIndexBranch() (string, error) {
 		return "", err
 	}
 	return branch, nil
+}
+
+func writeIndex(commands []Command) error {
+
+	configPath, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+
+	repo_name, err := GetRepoName()
+	if err != nil {
+		return err
+	}
+
+	indexPath := filepath.Join(configPath, "commands-wiki", "index", repo_name)
+	// Create the indexPath if it does not exist
+	err = os.MkdirAll(indexPath, 0744)
+	if err != nil {
+		return err
+	}
+	indexFilePath := filepath.Join(indexPath, "index")
+
+	// Open the index file
+	indexFile, err := os.OpenFile(indexFilePath, os.O_WRONLY, 0744)
+	if err != nil {
+		return err
+	}
+
+	// Write the commands array to the json file
+	jsonBytes, err := json.Marshal(commands)
+	if err != nil {
+		return err
+	}
+	_, err = indexFile.Write(jsonBytes)
+	if err != nil {
+		return err
+	}
+	indexFile.WriteString("\n")
+	err = indexFile.Close()
+	if err != nil {
+		return err
+	}
+	return nil
 }

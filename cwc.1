@@ -8,6 +8,9 @@ cwc \- commandline version for commands.wiki
 This is a commandline version for commands.wiki. It can be used to run commands without having to access the website.
 .SH OPTIONS
 .TP
+.BR "ai <prompt>"
+Asks OpenAI to generate the command and a description like all of the other commands.wiki commands.
+.TP
 .BR "update [--repo <repository>] [--branch <branch>]"
 Update the command index. This will pull the git repository and index all commands again. The --repo and --branch flags are optional and allow specifying a particular repository and branch to update.
 .TP
@@ -23,6 +26,9 @@ Runs the TUI version of cwc and shows all commands. If the index has not been up
 .TP
 .BR "cwc update"
 Update the command index.
+.TP
+.BR "cwc ai a command to convert a video to a mp3 file"
+Asks OpenAI to generate a command for converting a video to a mp3 file and streams the output to you. Then it takes you to the same command view as all of the other commands so that you can execute it.
 .TP
 .BR "cwc clean"
 Reset the cli to default settings.

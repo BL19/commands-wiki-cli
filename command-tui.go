@@ -329,6 +329,29 @@ func (m cmdInfoModel) ValidateInput() bool {
 	return true
 }
 
+func (m cmdInfoModel) GetValidationError() string {
+	input := m.textInput.Value()
+	if m.validationType == "regex" {
+		return "must match regex: " + m.validationData
+	} else if m.validationType == "file" {
+		// Check if we have the mimetype in the cache
+		if mimetypeCache == nil {
+			mimetypeCache = make(map[string]string)
+		}
+		if mimetypeCache[input] == "" {
+			// Get the mimetype
+			mimetype, err := mimetype.DetectFile(input)
+			if err != nil {
+				return "file or filetype not found"
+			}
+			mimetypeCache[input] = mimetype.String()
+		}
+		return "File type must match " + m.validationData + " (was " + mimetypeCache[input] + ")"
+
+	}
+	return "¯\\_(ツ)_/¯"
+}
+
 // View returns a string representation of the UI.
 func (m cmdInfoModel) View() string {
 	view := m.markdown.View()
@@ -361,7 +384,7 @@ func (m cmdInfoModel) View() string {
 
 		// If we have a regex, validate it
 		if !m.ValidateInput() {
-			view += " ❌"
+			view += " ❌ " + m.GetValidationError()
 		} else {
 			view += " ✔️"
 		}

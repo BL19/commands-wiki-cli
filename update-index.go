@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -65,6 +64,18 @@ func updateIndex(repo string, branch string) error {
 		return err
 	}
 
+	ai_commands_path := filepath.Join(configPath, "commands-wiki", "ai")
+	err = filepath.Walk(ai_commands_path, func(path string, info os.FileInfo, err error) error {
+		if filepath.Ext(path) == ".md" {
+			commandsFiles = append(commandsFiles, path)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
 	indexPath := filepath.Join(configPath, "commands-wiki", "index", repo_name)
 	// Create the indexPath if it does not exist
 	err = os.MkdirAll(indexPath, 0744)
@@ -96,12 +107,6 @@ func updateIndex(repo string, branch string) error {
 		log.Info("created index", "indexPath", indexFilePath)
 	}
 
-	// Open the index file
-	indexFile, err := os.OpenFile(indexFilePath, os.O_WRONLY, 0744)
-	if err != nil {
-		return err
-	}
-
 	var commands []Command
 
 	// Write the index file
@@ -111,6 +116,12 @@ func updateIndex(repo string, branch string) error {
 		if err != nil {
 			return err
 		}
+
+		var isAiCommand bool
+		if strings.HasPrefix(file, ai_commands_path) {
+			isAiCommand = true
+		}
+
 		contents := string(contentsBytes)
 		lines := strings.Split(contents, "\n")
 		// Read until "##"
@@ -124,7 +135,7 @@ func updateIndex(repo string, branch string) error {
 		for _, line := range lines {
 			if strings.HasPrefix(line, "### ") {
 				if title != "" {
-					addCmd(title, codeBlockContent, &commands, description, markdown, markdownRoot, metadata)
+					addCmd(title, codeBlockContent, &commands, description, markdown, markdownRoot, metadata, isAiCommand)
 				}
 				title = strings.TrimPrefix(line, "### ")
 				description = ""
@@ -168,20 +179,11 @@ func updateIndex(repo string, branch string) error {
 
 		}
 		if title != "" {
-			addCmd(title, codeBlockContent, &commands, description, markdown, markdownRoot, metadata)
+			addCmd(title, codeBlockContent, &commands, description, markdown, markdownRoot, metadata, isAiCommand)
 		}
 	}
-	// Write the commands array to the json file
-	jsonBytes, err := json.Marshal(commands)
-	if err != nil {
-		return err
-	}
-	_, err = indexFile.Write(jsonBytes)
-	if err != nil {
-		return err
-	}
-	indexFile.WriteString("\n")
-	err = indexFile.Close()
+
+	err = writeIndex(commands)
 	if err != nil {
 		return err
 	}
@@ -192,13 +194,13 @@ func updateIndex(repo string, branch string) error {
 	return nil
 }
 
-func addCmd(title string, codeBlockContent string, commands *[]Command, description string, markdown string, markdownRoot string, metadata map[string]map[string]string) {
+func addCmd(title string, codeBlockContent string, commands *[]Command, description string, markdown string, markdownRoot string, metadata map[string]map[string]string, isAi bool) {
 	// Extract the names of the variables inside of {}, <>
 	codeBlockLines := strings.Split(codeBlockContent, "\n")
 	var variables []string
 	for _, codeBlockLine := range codeBlockLines {
 		// Find all regex matches
-		reVariableNameRegex := regexp.MustCompile("[{<]([A-Za-z\\-_\\/]+)[>}]")
+		reVariableNameRegex := regexp.MustCompile("[{<]([A-Za-z\\d\\-_\\/]+)[>}]")
 		matches := reVariableNameRegex.FindAllStringSubmatch(codeBlockLine, -1)
 		for _, match := range matches {
 			variables = append(variables, match[1])
@@ -236,6 +238,7 @@ func addCmd(title string, codeBlockContent string, commands *[]Command, descript
 		CmdDescription: description,
 		MarkdownFile:   markdownFilePath,
 		Metadata:       metadata,
+		AiGenerated:    isAi,
 	}
 	*commands = append(*commands, cmd)
 }
