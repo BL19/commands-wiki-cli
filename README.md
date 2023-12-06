@@ -11,6 +11,9 @@ cwc
 ## Demo
 ![Showcase](https://cdn.bl19.dev/random-stuff/render1701722402957.gif)
 
+### Ai Features
+![Showcase](https://cdn.bl19.dev/random-stuff/ai-demo.mp4)
+
 ## Features
 - [x] List all commands in the wiki (list)
 - [x] Display the markdown for commands
@@ -20,6 +23,7 @@ cwc
 - [x] Validation of variables from markdown commands using a custom syntax in the markdown
 - [x] Update index automatically every 24 hours
 - [x] Automatic updates to `cwc` when the branch is updates
+- [x] Using AI to generate commands
 
 ## Usage
 To begin, install `cwc`, then run `cwc`.
