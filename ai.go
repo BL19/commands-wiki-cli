@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -148,7 +147,7 @@ func startCompletion(m aiCommandGenerationModel) {
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    "system",
-				Content: "You will get a description for a command, you should then write a title, short description and a description of each argument for this command. Where applicable use variables like `<variable_name>` in the commands. You should output markdown that does not exceed" + strconv.Itoa(m.markdown.Viewport.Width) + " characters per line. The markdown should be formatted like below:\n" + markdownExample,
+				Content: "You will get a description for a command, you should then write a title, short description and a description of each argument for this command. Where applicable use variables like `<variable_name>` in the commands. The markdown should be formatted like below:\n" + markdownExample,
 			},
 			{
 				Role:    "user",
